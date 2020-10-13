@@ -8,7 +8,7 @@ const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "",
+    password: "TiUP&c4tY2",
     database: "employee_management_db",
 });
 
@@ -21,15 +21,59 @@ connection.connect((err) => {
 const start = () => {
     inquirer
         .prompt({
-            name: "addOrEdit",
+            name: "addOrUpdate",
             type: "list",
-            message: "Would you like to ADD or EDIT a department, role or employee?",
-            choices: ["ADD", "EDIT", "DONE"],
+            message: "Would you like to ADD or VIEW departments, roles or employees or UPDATE employee roles?",
+            choices: ["ADD", "VIEW", "UPDATE", "DONE"]
         }).then((response) => {
-            if (response.addOrEdit === "ADD") {
-                addItem();
-            } else if (response.addOrEdit === "EDIT") {
-                editItem();
+            if (response.addOrUpdate === "ADD") {
+                inquirer
+                    .prompt({
+                        name: "addWhat",
+                        type: "list",
+                        message: "What do you want to add?",
+                        choices: ["Department", "Role", "Employee"]
+                    }).then((response) => {
+                        if (response.addWhat === "Department") {
+                            start();
+                        } else if (response.addWhat === "Role") {
+                            start();
+                        } else if (response.addWhat === "Employee") {
+                            start();
+                        };
+                    });
+            } else if (response.addOrUpdate === "UPDATE") {
+                inquirer
+                    .prompt({
+                        name: "updateWhat",
+                        type: "list",
+                        message: "What do you want to update?",
+                        choices: ["Department", "Role", "Employee"]
+                    }).then((response) => {
+                        if (response.updateWhat === "Department") {
+                            start();
+                        } else if (response.updateWhat === "Role") {
+                            start();
+                        } else if (response.updateWhat === "Employee") {
+                            start();
+                        };
+                    });
+            } else if (response.addOrUpdate === "VIEW") {
+                inquirer
+                    .prompt({
+                        name: "viewWhat",
+                        type: "list",
+                        message: "What do you want to view?",
+                        choices: ["Department", "Role", "Employee"]
+                    }).then((response) => {
+                        if (response.viewWhat === "Department") {
+                            start();
+                        } else if (response.viewWhat === "Role") {
+                            start();
+                        } else if (response.viewWhat === "Employee") {
+                            start();
+                        };
+                    });
             } else {
                 connection.end();
             }
