@@ -13,8 +13,25 @@ const connection = mysql.createConnection({
 });
 
 connection.connect((err) => {
-    if(err) throw err;
+    if (err) throw err;
     console.log("Connected as id " + connection.threadId + "\n");
-    init();
+    start();
 });
 
+const start = () => {
+    inquirer
+        .prompt({
+            name: "addOrEdit",
+            type: "list",
+            message: "Would you like to ADD or EDIT a department, role or employee?",
+            choices: ["ADD", "EDIT", "DONE"],
+        }).then((response) => {
+            if (response.addOrEdit === "ADD") {
+                addItem();
+            } else if (response.addOrEdit === "EDIT") {
+                editItem();
+            } else {
+                connection.end();
+            }
+        });
+};
