@@ -17,9 +17,15 @@ const connection = mysql.createConnection({
 connection.connect((err) => {
     if (err) throw err;
     console.log("Connected as id " + connection.threadId + "\n");
-    console.log(process.env);
     start();
 });
+
+const addViewWhat = {
+    name: "addViewWhat",
+    type: "list",
+    message: "What do you want to add or view?",
+    choices: ["Department", "Role", "Employee"]
+};
 
 const start = () => {
     inquirer
@@ -31,17 +37,23 @@ const start = () => {
         }).then((response) => {
             if (response.addOrUpdate === "ADD") {
                 inquirer
-                    .prompt({
-                        name: "addWhat",
-                        type: "list",
-                        message: "What do you want to add?",
-                        choices: ["Department", "Role", "Employee"]
-                    }).then((response) => {
-                        if (response.addWhat === "Department") {
+                    .prompt(addViewWhat).then((response) => {
+                        if (response.addViewWhat === "Department") {
                             start();
-                        } else if (response.addWhat === "Role") {
+                        } else if (response.addViewWhat === "Role") {
                             start();
-                        } else if (response.addWhat === "Employee") {
+                        } else if (response.addViewWhat === "Employee") {
+                            start();
+                        };
+                    });
+            } else if (response.addOrUpdate === "VIEW") {
+                inquirer
+                    .prompt(addViewWhat).then((response) => {
+                        if (response.addViewWhat === "Department") {
+                            start();
+                        } else if (response.addViewWhat === "Role") {
+                            start();
+                        } else if (response.addViewWhat === "Employee") {
                             start();
                         };
                     });
@@ -49,33 +61,10 @@ const start = () => {
                 inquirer
                     .prompt({
                         name: "updateWhat",
-                        type: "list",
-                        message: "What do you want to update?",
-                        choices: ["Department", "Role", "Employee"]
+                        type: "input",
+                        message: "Whose role do you want to update?",
                     }).then((response) => {
-                        if (response.updateWhat === "Department") {
-                            start();
-                        } else if (response.updateWhat === "Role") {
-                            start();
-                        } else if (response.updateWhat === "Employee") {
-                            start();
-                        };
-                    });
-            } else if (response.addOrUpdate === "VIEW") {
-                inquirer
-                    .prompt({
-                        name: "viewWhat",
-                        type: "list",
-                        message: "What do you want to view?",
-                        choices: ["Department", "Role", "Employee"]
-                    }).then((response) => {
-                        if (response.viewWhat === "Department") {
-                            start();
-                        } else if (response.viewWhat === "Role") {
-                            start();
-                        } else if (response.viewWhat === "Employee") {
-                            start();
-                        };
+                        console.log(response.updateWhat);
                     });
             } else {
                 connection.end();
