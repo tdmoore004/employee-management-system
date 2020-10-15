@@ -20,6 +20,13 @@ connection.connect((err) => {
     start();
 });
 
+const addOrUpdate = {
+    name: "addOrUpdate",
+    type: "list",
+    message: "Would you like to ADD or VIEW departments, roles or employees or UPDATE employee roles?",
+    choices: ["ADD", "VIEW", "UPDATE", "DONE"]
+};
+
 const addViewWhat = {
     name: "addViewWhat",
     type: "list",
@@ -27,42 +34,64 @@ const addViewWhat = {
     choices: ["Department", "Role", "Employee"]
 };
 
+const updateWhat = [
+    {
+        name: "updateWhat",
+        type: "input",
+        message: "What is the ID of the employee whose role you want to update?",
+    },
+    {
+        name: "newRole",
+        typw: "input",
+        message: "What is the ID for their new role?"
+    }
+];
+
 const start = () => {
     inquirer
-        .prompt({
-            name: "addOrUpdate",
-            type: "list",
-            message: "Would you like to ADD or VIEW departments, roles or employees or UPDATE employee roles?",
-            choices: ["ADD", "VIEW", "UPDATE", "DONE"]
-        }).then((response) => {
-            if (response.addOrUpdate === "ADD") {
-                inquirer
-                    .prompt(addViewWhat).then((response) => {
-                        if (response.addViewWhat === "Department") {
-                            addDepartment();
-                        } else if (response.addViewWhat === "Role") {
-                            addRole();
-                        } else if (response.addViewWhat === "Employee") {
-                            addEmployee();
-                        };
-                    });
-            } else if (response.addOrUpdate === "VIEW") {
-                inquirer
-                    .prompt(addViewWhat).then((response) => {
-                        viewItem(response.addViewWhat.toLowerCase());
-                    });
-            } else if (response.addOrUpdate === "UPDATE") {
-                inquirer
-                    .prompt({
-                        name: "updateWhat",
-                        type: "input",
-                        message: "Whose role do you want to update?",
-                    }).then((response) => {
-                        console.log(response.updateWhat);
-                    });
-            } else {
-                connection.end();
-            }
+        .prompt(addOrUpdate).then((response) => {
+            switch (response.addOrUpdate) {
+                case "ADD":
+                    addWhat();
+                    break;
+                case "VIEW":
+                    viewWhat();
+                    break;
+                case "UPDATE":
+                    updateWhat();
+                    break;
+                case "DONE":
+                    connection.end();
+                    break;
+            };
+        });
+};
+
+const addWhat = () => {
+    inquirer
+        .prompt(addViewWhat).then((response) => {
+            switch (response.addViewWhat) {
+                case "Department":
+                    addDepartment();
+                case "Role":
+                    addRole();
+                case "Employee":
+                    addEmployee();
+            };
+        });
+};
+
+const viewWhat = () => {
+    inquirer
+        .prompt(addViewWhat).then((response) => {
+            viewItem(response.addViewWhat.toLowerCase());
+        });
+};
+
+const updateWhat = () => {
+    inquirer
+        .prompt(updateWhat).then((response) => {
+            updateEmployeeRole(response.newRole, response.updateWhat);
         });
 };
 
@@ -76,6 +105,7 @@ const addDepartment = () => {
             connection.query("INSERT INTO department (name) VALUES (?)", [response.departmentName], (err, result) => {
                 if (err) throw err;
             });
+            reRun();
         });
 };
 
@@ -94,6 +124,7 @@ const addRole = () => {
             connection.query("INSERT INTO role (title, department_id) VALUES (?, ?)", [response.roleTitle, response.roleDepartment], (err, result) => {
                 if (err) throw err;
             });
+            reRun();
         });
 };
 
@@ -119,16 +150,41 @@ const addEmployee = () => {
             type: "input",
             message: "What is the ID for this employee's manager? (If there is no manager enter 0)"
         }
-    ]).then((response) => {
-        connection.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [response.firstName, response.lastName, response.roleId, response.managerId], (err, result) => {
-            if (err) throw err;
+        ]).then((response) => {
+            connection.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [response.firstName, response.lastName, response.roleId, response.managerId], (err, result) => {
+                if (err) throw err;
+            });
+            reRun();
         });
-    });
 };
 
 const viewItem = (table) => {
     connection.query("SELECT * FROM " + table, (err, response) => {
         if (err) throw err;
         console.table(response);
+        reRun();
     });
+};
+
+const updateEmployeeRole = (newRole, id) => {
+    connection.query("UPDATE employee SET role_id = " + newRole + " WHERE id = " + id, (err, result) => {
+        if (err) throw err;
+        reRun();
+    });
+};
+
+const reRun = () => {
+    inquirer
+        .prompt({
+            name: "reRun",
+            type: "list",
+            message: "Do you have more to do in EMS?",
+            choices: ["Yes", "No"],
+        }).then((response) => {
+            if (response.reRun === "Yes") {
+                start();
+            } else {
+                connection.end();
+            };
+        });
 };
