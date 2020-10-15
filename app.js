@@ -4,6 +4,7 @@ const mysql = require("mysql");
 const cTable = require("console.table");
 const dotenv = require("dotenv");
 
+// Configuring dependencies.
 dotenv.config();
 
 const connection = mysql.createConnection({
@@ -20,21 +21,22 @@ connection.connect((err) => {
     start();
 });
 
-const addOrUpdate = {
+// Variables with inquirer questions.
+const addOrUpdateQuestions = {
     name: "addOrUpdate",
     type: "list",
     message: "Would you like to ADD or VIEW departments, roles or employees or UPDATE employee roles?",
     choices: ["ADD", "VIEW", "UPDATE", "DONE"]
 };
 
-const addViewWhat = {
+const addViewWhatQuestions = {
     name: "addViewWhat",
     type: "list",
     message: "What do you want to add or view?",
     choices: ["Department", "Role", "Employee"]
 };
 
-const updateWhat = [
+const updateWhatQuestions = [
     {
         name: "updateWhat",
         type: "input",
@@ -47,9 +49,10 @@ const updateWhat = [
     }
 ];
 
+// Function to initialize the application.
 const start = () => {
     inquirer
-        .prompt(addOrUpdate).then((response) => {
+        .prompt(addOrUpdateQuestions).then((response) => {
             switch (response.addOrUpdate) {
                 case "ADD":
                     addWhat();
@@ -67,9 +70,10 @@ const start = () => {
         });
 };
 
+// Functions to determine what to add, view or update.
 const addWhat = () => {
     inquirer
-        .prompt(addViewWhat).then((response) => {
+        .prompt(addViewWhatQuestions).then((response) => {
             switch (response.addViewWhat) {
                 case "Department":
                     addDepartment();
@@ -83,18 +87,29 @@ const addWhat = () => {
 
 const viewWhat = () => {
     inquirer
-        .prompt(addViewWhat).then((response) => {
-            viewItem(response.addViewWhat.toLowerCase());
+        .prompt(addViewWhatQuestions).then((response) => {
+            switch (response.addViewWhat) {
+                case "Department":
+                    viewDepartment();
+                    break;
+                case "Role":
+                    viewRole();
+                    break;
+                case "Employee":
+                    viewEmployee();
+                    break;
+            };
         });
 };
 
 const updateWhat = () => {
     inquirer
-        .prompt(updateWhat).then((response) => {
+        .prompt(updateWhatQuestions).then((response) => {
             updateEmployeeRole(response.newRole, response.updateWhat);
         });
 };
 
+// Functions to add a Department, Role or Employee.
 const addDepartment = () => {
     inquirer
         .prompt({
@@ -158,14 +173,32 @@ const addEmployee = () => {
         });
 };
 
-const viewItem = (table) => {
-    connection.query("SELECT * FROM " + table, (err, response) => {
+// Function for viewing an item.
+const viewDepartment = () => {
+    connection.query("SELECT * FROM department", (err, response) => {
         if (err) throw err;
         console.table(response);
         reRun();
     });
 };
 
+const viewRole = () => {
+    connection.query("SELECT role.id, role.title, department.name FROM role INNER JOIN department ON (role.department_id = department.id)", (err, response) => {
+        if (err) throw err;
+        console.table(response);
+        reRun();
+    });
+};
+
+const viewEmployee = () => {
+    connection.query("SELECT employee.id, employee.first_name, employee.last_name, role.title FROM employee INNER JOIN role ON (employee.role_id = role.id)", (err, response) => {
+        if (err) throw err;
+        console.table(response);
+        reRun();
+    });
+};
+
+// Function for updating employee's roles.
 const updateEmployeeRole = (newRole, id) => {
     connection.query("UPDATE employee SET role_id = " + newRole + " WHERE id = " + id, (err, result) => {
         if (err) throw err;
