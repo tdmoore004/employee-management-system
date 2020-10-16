@@ -137,7 +137,7 @@ const viewRole = () => {
 };
 
 const viewEmployee = () => {
-    connection.query("SELECT employee.id, employee.first_name, employee.last_name, role.title, employee.manager_id FROM employee INNER JOIN role ON (employee.role_id = role.id)", (err, response) => {
+    connection.query("SELECT e.id, concat(e.first_name, ' ', e.last_name) AS employee, role.title, concat(m.first_name, ' ', m.last_name) AS manager FROM employee e LEFT JOIN role ON (e.role_id = role.id) LEFT JOIN employee m ON (e.manager_id = m.id)", (err, response) => {
         if (err) throw err;
         console.table(response);
         reRun();
