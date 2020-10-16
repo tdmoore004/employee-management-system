@@ -36,6 +36,9 @@ const start = () => {
                 case "UPDATE":
                     updateWhat();
                     break;
+                case "DELETE":
+                    deleteWhat();
+                    break;
                 case "DONE":
                     connection.end();
                     break;
@@ -43,7 +46,7 @@ const start = () => {
         });
 };
 
-// Functions to determine what to add, view or update.
+// Functions to determine what to add, view, update or delete.
 const addWhat = () => {
     inquirer
         .prompt(questions.addViewWhatQuestions).then((response) => {
@@ -81,7 +84,24 @@ const viewWhat = () => {
 const updateWhat = () => {
     inquirer
         .prompt(questions.updateWhatQuestions).then((response) => {
-            updateEmployeeRole(response.newRole, response.updateWhat);
+            updateEmployee(response.updateWho, response.updateWhat, response.newItem);
+        });
+};
+
+const deleteWhat = () => {
+    inquirer
+        .prompt(questions.addViewWhatQuestions).then((response) => {
+            switch (response.addViewWhat) {
+                case "Department":
+                    deleteDepartment();
+                    break;
+                case "Role":
+                    deleteRole();
+                    break;
+                case "Employee":
+                    deleteEmployee();
+                    break;
+            };
         });
 };
 
@@ -144,12 +164,56 @@ const viewEmployee = () => {
     });
 };
 
-// Function for updating employee's roles.
-const updateEmployeeRole = (newRole, id) => {
-    connection.query("UPDATE employee SET role_id = " + newRole + " WHERE id = " + id, (err, result) => {
-        if (err) throw err;
-        reRun();
-    });
+// Function for updating employee's roles and managers.
+const updateEmployee = (whoUpdate, whatUpdate, newItem) => {
+    switch (whatUpdate) {
+        case "Role":
+            connection.query("UPDATE employee SET role_id = " + newItem + " WHERE id = " + whoUpdate, (err, result) => {
+                if (err) throw err;
+                reRun();
+            });
+            break;
+        case "Manager":
+            if (newItem === "") {
+                newItem = null;
+            }
+            connection.query("UPDATE employee SET manager_id = " + newItem + " WHERE id = " + whoUpdate, (err, result) => {
+                if (err) throw err;
+                reRun();
+            });
+            break;
+    };
+};
+
+// Function for deleting an department, role or employee.
+const deleteDepartment = () => {
+    inquirer
+        .prompt(questions.deleteDepartment).then((response) => {
+            connection.query("DELETE FROM department WHERE id = " + response.deleteDepartment, (err, result) => {
+                if (err) throw err;
+                reRun();
+            });
+        });
+};
+
+const deleteRole = () => {
+    inquirer
+        .prompt(questions.deleteRole).then((response) => {
+            connection.query("DELETE FROM role WHERE id = " + response.deleteRole, (err, result) => {
+                if (err) throw err;
+                reRun();
+            });
+        });
+};
+
+const deleteEmployee = () => {
+    inquirer
+        .prompt(questions.deleteEmployee).then((response) => {
+            connection.query("DELETE FROM employee WHERE id = " + response.deleteEmployee, (err, result) => {
+                if (err) throw err;
+                reRun();
+            });
+        });
 };
 
 const reRun = () => {
