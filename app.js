@@ -3,6 +3,7 @@ const inquirer = require("inquirer");
 const mysql = require("mysql");
 const cTable = require("console.table");
 const dotenv = require("dotenv");
+const questions = require("./lib/questions");
 
 // Configuring dependencies.
 dotenv.config();
@@ -21,38 +22,10 @@ connection.connect((err) => {
     start();
 });
 
-// Variables with inquirer questions.
-const addOrUpdateQuestions = {
-    name: "addOrUpdate",
-    type: "list",
-    message: "Would you like to ADD or VIEW departments, roles or employees or UPDATE employee roles?",
-    choices: ["ADD", "VIEW", "UPDATE", "DONE"]
-};
-
-const addViewWhatQuestions = {
-    name: "addViewWhat",
-    type: "list",
-    message: "What do you want to add or view?",
-    choices: ["Department", "Role", "Employee"]
-};
-
-const updateWhatQuestions = [
-    {
-        name: "updateWhat",
-        type: "input",
-        message: "What is the ID of the employee whose role you want to update?",
-    },
-    {
-        name: "newRole",
-        typw: "input",
-        message: "What is the ID for their new role?"
-    }
-];
-
 // Function to initialize the application.
 const start = () => {
     inquirer
-        .prompt(addOrUpdateQuestions).then((response) => {
+        .prompt(questions.addOrUpdateQuestions).then((response) => {
             switch (response.addOrUpdate) {
                 case "ADD":
                     addWhat();
@@ -73,21 +46,24 @@ const start = () => {
 // Functions to determine what to add, view or update.
 const addWhat = () => {
     inquirer
-        .prompt(addViewWhatQuestions).then((response) => {
+        .prompt(questions.addViewWhatQuestions).then((response) => {
             switch (response.addViewWhat) {
                 case "Department":
                     addDepartment();
+                    break;
                 case "Role":
                     addRole();
+                    break;
                 case "Employee":
                     addEmployee();
+                    break;
             };
         });
 };
 
 const viewWhat = () => {
     inquirer
-        .prompt(addViewWhatQuestions).then((response) => {
+        .prompt(questions.addViewWhatQuestions).then((response) => {
             switch (response.addViewWhat) {
                 case "Department":
                     viewDepartment();
@@ -104,7 +80,7 @@ const viewWhat = () => {
 
 const updateWhat = () => {
     inquirer
-        .prompt(updateWhatQuestions).then((response) => {
+        .prompt(questions.updateWhatQuestions).then((response) => {
             updateEmployeeRole(response.newRole, response.updateWhat);
         });
 };
@@ -112,11 +88,7 @@ const updateWhat = () => {
 // Functions to add a Department, Role or Employee.
 const addDepartment = () => {
     inquirer
-        .prompt({
-            name: "departmentName",
-            type: "input",
-            message: "What is the name of the department you want to add?"
-        }).then((response) => {
+        .prompt(questions.addDepartmentQuestion).then((response) => {
             connection.query("INSERT INTO department (name) VALUES (?)", [response.departmentName], (err, result) => {
                 if (err) throw err;
             });
@@ -126,17 +98,8 @@ const addDepartment = () => {
 
 const addRole = () => {
     inquirer
-        .prompt([{
-            name: "roleTitle",
-            type: "input",
-            message: "What is the title of the role you want to add?"
-        },
-        {
-            name: "roleDepartment",
-            type: "input",
-            message: "What is the ID for the department this role is in?"
-        }]).then((response) => {
-            connection.query("INSERT INTO role (title, department_id) VALUES (?, ?)", [response.roleTitle, response.roleDepartment], (err, result) => {
+        .prompt(questions.addRoleQuestions).then((response) => {
+            connection.query("INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)", [response.roleTitle, response.roleSalary, response.roleDepartment], (err, result) => {
                 if (err) throw err;
             });
             reRun();
@@ -145,27 +108,10 @@ const addRole = () => {
 
 const addEmployee = () => {
     inquirer
-        .prompt([{
-            name: "firstName",
-            type: "input",
-            message: "What is the first name of the employee you are adding?"
-        },
-        {
-            name: "lastName",
-            type: "input",
-            message: "What is the last name of the employee you are adding?"
-        },
-        {
-            name: "roleId",
-            type: "input",
-            message: "What is the ID for the role this employee will have?"
-        },
-        {
-            name: "managerId",
-            type: "input",
-            message: "What is the ID for this employee's manager? (If there is no manager enter 0)"
-        }
-        ]).then((response) => {
+        .prompt(questions.addEmployeeQuestions).then((response) => {
+            if (response.managerId === "") {
+                response.managerId = null;
+            }
             connection.query("INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)", [response.firstName, response.lastName, response.roleId, response.managerId], (err, result) => {
                 if (err) throw err;
             });
@@ -183,7 +129,7 @@ const viewDepartment = () => {
 };
 
 const viewRole = () => {
-    connection.query("SELECT role.id, role.title, department.name FROM role INNER JOIN department ON (role.department_id = department.id)", (err, response) => {
+    connection.query("SELECT role.id, role.title, role.salary, department.name FROM role INNER JOIN department ON (role.department_id = department.id)", (err, response) => {
         if (err) throw err;
         console.table(response);
         reRun();
@@ -191,7 +137,7 @@ const viewRole = () => {
 };
 
 const viewEmployee = () => {
-    connection.query("SELECT employee.id, employee.first_name, employee.last_name, role.title FROM employee INNER JOIN role ON (employee.role_id = role.id)", (err, response) => {
+    connection.query("SELECT employee.id, employee.first_name, employee.last_name, role.title, employee.manager_id FROM employee INNER JOIN role ON (employee.role_id = role.id)", (err, response) => {
         if (err) throw err;
         console.table(response);
         reRun();
@@ -208,12 +154,7 @@ const updateEmployeeRole = (newRole, id) => {
 
 const reRun = () => {
     inquirer
-        .prompt({
-            name: "reRun",
-            type: "list",
-            message: "Do you have more to do in EMS?",
-            choices: ["Yes", "No"],
-        }).then((response) => {
+        .prompt(questions.reRunQuestion).then((response) => {
             if (response.reRun === "Yes") {
                 start();
             } else {
