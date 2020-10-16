@@ -5,7 +5,7 @@ const cTable = require("console.table");
 const dotenv = require("dotenv");
 const questions = require("./lib/questions");
 
-// Configuring dependencies.
+// Configuring dependencies and connections.
 dotenv.config();
 
 const connection = mysql.createConnection({
@@ -149,7 +149,7 @@ const viewDepartment = () => {
 };
 
 const viewRole = () => {
-    connection.query("SELECT role.id, role.title, role.salary, department.name FROM role INNER JOIN department ON (role.department_id = department.id)", (err, response) => {
+    connection.query("SELECT role.id, role.title AS role, role.salary, department.name AS department, department_id FROM role LEFT JOIN department ON (role.department_id = department.id)", (err, response) => {
         if (err) throw err;
         console.table(response);
         reRun();
@@ -168,7 +168,7 @@ const viewEmployee = () => {
 const updateEmployee = (whoUpdate, whatUpdate, newItem) => {
     switch (whatUpdate) {
         case "Role":
-            connection.query("UPDATE employee SET role_id = " + newItem + " WHERE id = " + whoUpdate, (err, result) => {
+            connection.query("UPDATE employee SET role_id = ? WHERE id = ?", [newItem, whoUpdate], (err, result) => {
                 if (err) throw err;
                 reRun();
             });
@@ -177,7 +177,7 @@ const updateEmployee = (whoUpdate, whatUpdate, newItem) => {
             if (newItem === "") {
                 newItem = null;
             }
-            connection.query("UPDATE employee SET manager_id = " + newItem + " WHERE id = " + whoUpdate, (err, result) => {
+            connection.query("UPDATE employee SET manager_id = ? WHERE id = ?", [newItem, whoUpdate], (err, result) => {
                 if (err) throw err;
                 reRun();
             });
@@ -189,7 +189,7 @@ const updateEmployee = (whoUpdate, whatUpdate, newItem) => {
 const deleteDepartment = () => {
     inquirer
         .prompt(questions.deleteDepartment).then((response) => {
-            connection.query("DELETE FROM department WHERE id = " + response.deleteDepartment, (err, result) => {
+            connection.query("DELETE FROM department WHERE id = ?", [response.deleteDepartment], (err, result) => {
                 if (err) throw err;
                 reRun();
             });
@@ -199,7 +199,7 @@ const deleteDepartment = () => {
 const deleteRole = () => {
     inquirer
         .prompt(questions.deleteRole).then((response) => {
-            connection.query("DELETE FROM role WHERE id = " + response.deleteRole, (err, result) => {
+            connection.query("DELETE FROM role WHERE id = ?", [response.deleteRole], (err, result) => {
                 if (err) throw err;
                 reRun();
             });
@@ -209,7 +209,7 @@ const deleteRole = () => {
 const deleteEmployee = () => {
     inquirer
         .prompt(questions.deleteEmployee).then((response) => {
-            connection.query("DELETE FROM employee WHERE id = " + response.deleteEmployee, (err, result) => {
+            connection.query("DELETE FROM employee WHERE id = ?", [response.deleteEmployee], (err, result) => {
                 if (err) throw err;
                 reRun();
             });
